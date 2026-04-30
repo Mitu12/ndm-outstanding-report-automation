@@ -1,0 +1,429 @@
+import Functions.all_library as lib
+import Functions.all_function as fn
+
+
+def ndm_matured_credit_aging():
+    anwar_df = lib.pd.read_sql_query("""
+            SELECT  AgingDays, sum(Amount)/1000 as Amount FROM
+            (Select
+            case
+            when TblCredit.Days_Diff between '0' and '3'  THEN '0 - 3 days'
+            when TblCredit.Days_Diff between '4' and '10'  THEN '4 - 10 days'
+            when TblCredit.Days_Diff between '11' and '15'  THEN '11 - 15 days'
+            when TblCredit.Days_Diff between '16' and '30'  THEN '16 - 30 days'
+            when TblCredit.Days_Diff between '31' and '90'  THEN '31 - 90 days'
+            when TblCredit.Days_Diff between '91' and '201'  THEN '91 - 201 days'
+
+            else '202+ Days' end  as AgingDays,
+            --OUT_NET
+            Sum(OUT_NET) as Amount,
+
+            CASE
+            when TblCredit.Days_Diff between '1' and '3'  THEN 1
+            when TblCredit.Days_Diff between '4' and '10'  THEN 2
+            when TblCredit.Days_Diff between '11' and '15'  THEN 3
+            when TblCredit.Days_Diff between '16' and '30'  THEN 4
+            when TblCredit.Days_Diff between '31' and '90'  THEN 5
+            when TblCredit.Days_Diff between '91' and '201' THEN 6
+
+            ELSE  7
+            END AS SERIAL
+            from
+            (select INVNUMBER,INVDATE,
+            CUSTOMER,TERMS,MAINCUSTYPE,
+            CustomerInformation.CREDIT_LIMIT_DAYS,
+            (datediff([dd] , CONVERT (DATETIME , LTRIM(cust_out.INVDATE) , 102) , GETDATE())+1-CREDIT_LIMIT_DAYS) as Days_Diff,
+            OUT_NET from [ARCOUT].dbo.[CUST_OUT]
+            join ARCHIVESKF.dbo.CustomerInformation
+            on [CUST_OUT].CUSTOMER = CustomerInformation.IDCUST
+            where [ARCOUT].dbo.[CUST_OUT].AUDTORG IN ('BOGSKF','MYMSKF', 'FRDSKF', 'TGLSKF', 'RAJSKF', 'SAVSKF') and  TERMS<>'Cash' ) as TblCredit
+            where Days_Diff>0
+
+            group by
+            case
+            when TblCredit.Days_Diff between '0' and '3'  THEN '0 - 3 days'
+            when TblCredit.Days_Diff between '4' and '10'  THEN '4 - 10 days'
+            when TblCredit.Days_Diff between '11' and '15'  THEN '11 - 15 days'
+            when TblCredit.Days_Diff between '16' and '30'  THEN '16 - 30 days'
+            when TblCredit.Days_Diff between '31' and '90'  THEN '31 - 90 days'
+            when TblCredit.Days_Diff between '91' and '201'  THEN '91 - 201 days'
+            else '202+ Days' end,
+            CASE
+            when TblCredit.Days_Diff between '1' and '3'  THEN 1
+            when TblCredit.Days_Diff between '4' and '10'  THEN 2
+            when TblCredit.Days_Diff between '11' and '15'  THEN 3
+            when TblCredit.Days_Diff between '16' and '30'  THEN 4
+            when TblCredit.Days_Diff between '31' and '90'  THEN 5
+            when TblCredit.Days_Diff between '91' and '201' THEN 6
+
+            ELSE  7
+            END ) AS T1
+            group by T1.AgingDays, SERIAL
+            order by SERIAL
+                     """, fn.conn)
+    # print(anwar_df)
+    anwar_0_3 = int(anwar_df.Amount.loc[0])
+    anwar_4_10 = int(anwar_df.Amount.loc[1])
+    anwar_11_15 = int(anwar_df.Amount.loc[2])
+    anwar_16_30 = int(anwar_df.Amount.loc[3])
+    anwar_31_90 = int(anwar_df.Amount.loc[4])
+    anwar_91_201 = int(anwar_df.Amount.loc[5])
+    anwar_202_more = int(anwar_df.Amount.loc[6])
+
+    # # -------------------------------------------------
+    kamrul_df = lib.pd.read_sql_query("""
+            SELECT  AgingDays, sum(Amount)/1000 as Amount FROM
+            (Select
+            case
+            when TblCredit.Days_Diff between '0' and '3'  THEN '0 - 3 days'
+            when TblCredit.Days_Diff between '4' and '10'  THEN '4 - 10 days'
+            when TblCredit.Days_Diff between '11' and '15'  THEN '11 - 15 days'
+            when TblCredit.Days_Diff between '16' and '30'  THEN '16 - 30 days'
+            when TblCredit.Days_Diff between '31' and '90'  THEN '31 - 90 days'
+            when TblCredit.Days_Diff between '91' and '201'  THEN '91 - 201 days'
+
+            else '202+ Days' end  as AgingDays,
+            --OUT_NET
+            Sum(OUT_NET) as Amount,
+
+            CASE
+            when TblCredit.Days_Diff between '1' and '3'  THEN 1
+            when TblCredit.Days_Diff between '4' and '10'  THEN 2
+            when TblCredit.Days_Diff between '11' and '15'  THEN 3
+            when TblCredit.Days_Diff between '16' and '30'  THEN 4
+            when TblCredit.Days_Diff between '31' and '90'  THEN 5
+            when TblCredit.Days_Diff between '91' and '201' THEN 6
+
+            ELSE  7
+            END AS SERIAL
+            from
+            (select INVNUMBER,INVDATE,
+            CUSTOMER,TERMS,MAINCUSTYPE,
+            CustomerInformation.CREDIT_LIMIT_DAYS,
+            (datediff([dd] , CONVERT (DATETIME , LTRIM(cust_out.INVDATE) , 102) , GETDATE())+1-CREDIT_LIMIT_DAYS) as Days_Diff,
+            OUT_NET from [ARCOUT].dbo.[CUST_OUT]
+            join ARCHIVESKF.dbo.CustomerInformation
+            on [CUST_OUT].CUSTOMER = CustomerInformation.IDCUST
+            where [ARCOUT].dbo.[CUST_OUT].AUDTORG IN ('BSLSKF','COMSKF','JESSKF','KHLSKF','MIRSKF','PATSKF') and  TERMS<>'Cash' ) as TblCredit
+            where Days_Diff>0
+
+            group by
+            case
+            when TblCredit.Days_Diff between '0' and '3'  THEN '0 - 3 days'
+            when TblCredit.Days_Diff between '4' and '10'  THEN '4 - 10 days'
+            when TblCredit.Days_Diff between '11' and '15'  THEN '11 - 15 days'
+            when TblCredit.Days_Diff between '16' and '30'  THEN '16 - 30 days'
+            when TblCredit.Days_Diff between '31' and '90'  THEN '31 - 90 days'
+            when TblCredit.Days_Diff between '91' and '201'  THEN '91 - 201 days'
+            else '202+ Days' end,
+            CASE
+            when TblCredit.Days_Diff between '1' and '3'  THEN 1
+            when TblCredit.Days_Diff between '4' and '10'  THEN 2
+            when TblCredit.Days_Diff between '11' and '15'  THEN 3
+            when TblCredit.Days_Diff between '16' and '30'  THEN 4
+            when TblCredit.Days_Diff between '31' and '90'  THEN 5
+            when TblCredit.Days_Diff between '91' and '201' THEN 6
+
+            ELSE  7
+            END ) AS T1
+            group by T1.AgingDays, SERIAL
+            order by SERIAL
+
+                    """, fn.conn)
+
+    kamrul_0_3 = int(kamrul_df.Amount.loc[0])
+    kamrul_4_10 = int(kamrul_df.Amount.loc[1])
+    kamrul_11_15 = int(kamrul_df.Amount.loc[2])
+    kamrul_16_30 = int(kamrul_df.Amount.loc[3])
+    kamrul_31_90 = int(kamrul_df.Amount.loc[4])
+    kamrul_91_201 = int(kamrul_df.Amount.loc[5])
+    kamrul_202_more = int(kamrul_df.Amount.loc[6])
+
+    # # --------------------------------------------------
+    atik_df = lib.pd.read_sql_query(""" 
+           SELECT  AgingDays, sum(Amount)/1000 as Amount FROM
+            (Select
+            case
+            when TblCredit.Days_Diff between '0' and '3'  THEN '0 - 3 days'
+            when TblCredit.Days_Diff between '4' and '10'  THEN '4 - 10 days'
+            when TblCredit.Days_Diff between '11' and '15'  THEN '11 - 15 days'
+            when TblCredit.Days_Diff between '16' and '30'  THEN '16 - 30 days'
+            when TblCredit.Days_Diff between '31' and '90'  THEN '31 - 90 days'
+            when TblCredit.Days_Diff between '91' and '201'  THEN '91 - 201 days'
+
+            else '202+ Days' end  as AgingDays,
+            --OUT_NET
+            Sum(OUT_NET) as Amount,
+
+            CASE
+            when TblCredit.Days_Diff between '1' and '3'  THEN 1
+            when TblCredit.Days_Diff between '4' and '10'  THEN 2
+            when TblCredit.Days_Diff between '11' and '15'  THEN 3
+            when TblCredit.Days_Diff between '16' and '30'  THEN 4
+            when TblCredit.Days_Diff between '31' and '90'  THEN 5
+            when TblCredit.Days_Diff between '91' and '201' THEN 6
+
+            ELSE  7
+            END AS SERIAL
+            from
+            (select INVNUMBER,INVDATE,
+            CUSTOMER,TERMS,MAINCUSTYPE,
+            CustomerInformation.CREDIT_LIMIT_DAYS,
+            (datediff([dd] , CONVERT (DATETIME , LTRIM(cust_out.INVDATE) , 102) , GETDATE())+1-CREDIT_LIMIT_DAYS) as Days_Diff,
+            OUT_NET from [ARCOUT].dbo.[CUST_OUT]
+            join ARCHIVESKF.dbo.CustomerInformation
+            on [CUST_OUT].CUSTOMER = CustomerInformation.IDCUST
+            where [ARCOUT].dbo.[CUST_OUT].AUDTORG IN ('DNJSKF','GZPSKF','HZJSKF','KRNSKF','KSGSKF','MOTSKF','RNGSKF') and  TERMS<>'Cash' ) as TblCredit
+            where Days_Diff>0
+
+            group by
+            case
+            when TblCredit.Days_Diff between '0' and '3'  THEN '0 - 3 days'
+            when TblCredit.Days_Diff between '4' and '10'  THEN '4 - 10 days'
+            when TblCredit.Days_Diff between '11' and '15'  THEN '11 - 15 days'
+            when TblCredit.Days_Diff between '16' and '30'  THEN '16 - 30 days'
+            when TblCredit.Days_Diff between '31' and '90'  THEN '31 - 90 days'
+            when TblCredit.Days_Diff between '91' and '201'  THEN '91 - 201 days'
+            else '202+ Days' end,
+            CASE
+            when TblCredit.Days_Diff between '1' and '3'  THEN 1
+            when TblCredit.Days_Diff between '4' and '10'  THEN 2
+            when TblCredit.Days_Diff between '11' and '15'  THEN 3
+            when TblCredit.Days_Diff between '16' and '30'  THEN 4
+            when TblCredit.Days_Diff between '31' and '90'  THEN 5
+            when TblCredit.Days_Diff between '91' and '201' THEN 6
+
+            ELSE  7
+            END ) AS T1
+            group by T1.AgingDays, SERIAL
+            order by SERIAL
+
+                            """, fn.conn)
+
+    atik_0_3 = int(atik_df.Amount.loc[0])
+    atik_4_10 = int(atik_df.Amount.loc[1])
+    atik_11_15 = int(atik_df.Amount.loc[2])
+    atik_16_30 = int(atik_df.Amount.loc[3])
+    atik_31_90 = int(atik_df.Amount.loc[4])
+    atik_91_201 = int(atik_df.Amount.loc[5])
+    atik_202_more = int(atik_df.Amount.loc[6])
+    # # ---------------------------------------------
+    nurul_df = lib.pd.read_sql_query("""
+            SELECT  AgingDays, sum(Amount)/1000 as Amount FROM
+            (Select
+            case
+            when TblCredit.Days_Diff between '0' and '3'  THEN '0 - 3 days'
+            when TblCredit.Days_Diff between '4' and '10'  THEN '4 - 10 days'
+            when TblCredit.Days_Diff between '11' and '15'  THEN '11 - 15 days'
+            when TblCredit.Days_Diff between '16' and '30'  THEN '16 - 30 days'
+            when TblCredit.Days_Diff between '31' and '90'  THEN '31 - 90 days'
+            when TblCredit.Days_Diff between '91' and '201'  THEN '91 - 201 days'
+
+            else '202+ Days' end  as AgingDays,
+            --OUT_NET
+            Sum(OUT_NET) as Amount,
+
+            CASE
+            when TblCredit.Days_Diff between '1' and '3'  THEN 1
+            when TblCredit.Days_Diff between '4' and '10'  THEN 2
+            when TblCredit.Days_Diff between '11' and '15'  THEN 3
+            when TblCredit.Days_Diff between '16' and '30'  THEN 4
+            when TblCredit.Days_Diff between '31' and '90'  THEN 5
+            when TblCredit.Days_Diff between '91' and '201' THEN 6
+
+            ELSE  7
+            END AS SERIAL
+            from
+            (select INVNUMBER,INVDATE,
+            CUSTOMER,TERMS,MAINCUSTYPE,
+            CustomerInformation.CREDIT_LIMIT_DAYS,
+            (datediff([dd] , CONVERT (DATETIME , LTRIM(cust_out.INVDATE) , 102) , GETDATE())+1-CREDIT_LIMIT_DAYS) as Days_Diff,
+            OUT_NET from [ARCOUT].dbo.[CUST_OUT]
+            join ARCHIVESKF.dbo.CustomerInformation
+            on [CUST_OUT].CUSTOMER = CustomerInformation.IDCUST
+            where [ARCOUT].dbo.[CUST_OUT].AUDTORG IN ('FENSKF','MHKSKF','MLVSKF','NOKSKF','SYLSKF','VRBSKF') and  TERMS<>'Cash' ) as TblCredit
+            where Days_Diff>0
+
+            group by
+            case
+            when TblCredit.Days_Diff between '0' and '3'  THEN '0 - 3 days'
+            when TblCredit.Days_Diff between '4' and '10'  THEN '4 - 10 days'
+            when TblCredit.Days_Diff between '11' and '15'  THEN '11 - 15 days'
+            when TblCredit.Days_Diff between '16' and '30'  THEN '16 - 30 days'
+            when TblCredit.Days_Diff between '31' and '90'  THEN '31 - 90 days'
+            when TblCredit.Days_Diff between '91' and '201'  THEN '91 - 201 days'
+            else '202+ Days' end,
+            CASE
+            when TblCredit.Days_Diff between '1' and '3'  THEN 1
+            when TblCredit.Days_Diff between '4' and '10'  THEN 2
+            when TblCredit.Days_Diff between '11' and '15'  THEN 3
+            when TblCredit.Days_Diff between '16' and '30'  THEN 4
+            when TblCredit.Days_Diff between '31' and '90'  THEN 5
+            when TblCredit.Days_Diff between '91' and '201' THEN 6
+
+            ELSE  7
+            END ) AS T1
+            group by T1.AgingDays, SERIAL
+            order by SERIAL
+
+                            """, fn.conn)
+
+    nurul_0_3 = int(nurul_df.Amount.loc[0])
+    nurul_4_10 = int(nurul_df.Amount.loc[1])
+    nurul_11_15 = int(nurul_df.Amount.loc[2])
+    nurul_16_30 = int(nurul_df.Amount.loc[3])
+    nurul_31_90 = int(nurul_df.Amount.loc[4])
+    nurul_91_201 = int(nurul_df.Amount.loc[5])
+    nurul_202_more = int(nurul_df.Amount.loc[6])
+
+    # # -------------------------------------------
+    hafizur_df = lib.pd.read_sql_query("""
+            SELECT  AgingDays, sum(Amount)/1000 as Amount FROM
+            (Select
+            case
+            when TblCredit.Days_Diff between '0' and '3'  THEN '0 - 3 days'
+            when TblCredit.Days_Diff between '4' and '10'  THEN '4 - 10 days'
+            when TblCredit.Days_Diff between '11' and '15'  THEN '11 - 15 days'
+            when TblCredit.Days_Diff between '16' and '30'  THEN '16 - 30 days'
+            when TblCredit.Days_Diff between '31' and '90'  THEN '31 - 90 days'
+            when TblCredit.Days_Diff between '91' and '201'  THEN '91 - 201 days'
+
+            else '202+ Days' end  as AgingDays,
+            --OUT_NET
+            Sum(OUT_NET) as Amount,
+
+            CASE
+            when TblCredit.Days_Diff between '1' and '3'  THEN 1
+            when TblCredit.Days_Diff between '4' and '10'  THEN 2
+            when TblCredit.Days_Diff between '11' and '15'  THEN 3
+            when TblCredit.Days_Diff between '16' and '30'  THEN 4
+            when TblCredit.Days_Diff between '31' and '90'  THEN 5
+            when TblCredit.Days_Diff between '91' and '201' THEN 6
+
+            ELSE  7
+            END AS SERIAL
+            from
+            (select INVNUMBER,INVDATE,
+            CUSTOMER,TERMS,MAINCUSTYPE,
+            CustomerInformation.CREDIT_LIMIT_DAYS,
+            (datediff([dd] , CONVERT (DATETIME , LTRIM(cust_out.INVDATE) , 102) , GETDATE())+1-CREDIT_LIMIT_DAYS) as Days_Diff,
+            OUT_NET from [ARCOUT].dbo.[CUST_OUT]
+            join ARCHIVESKF.dbo.CustomerInformation
+            on [CUST_OUT].CUSTOMER = CustomerInformation.IDCUST
+            where [ARCOUT].dbo.[CUST_OUT].AUDTORG IN ('COXSKF','CTGSKF','CTNSKF','KUSSKF','NAJSKF','PBNSKF') and  TERMS<>'Cash' ) as TblCredit
+            where Days_Diff>0
+
+            group by
+            case
+            when TblCredit.Days_Diff between '0' and '3'  THEN '0 - 3 days'
+            when TblCredit.Days_Diff between '4' and '10'  THEN '4 - 10 days'
+            when TblCredit.Days_Diff between '11' and '15'  THEN '11 - 15 days'
+            when TblCredit.Days_Diff between '16' and '30'  THEN '16 - 30 days'
+            when TblCredit.Days_Diff between '31' and '90'  THEN '31 - 90 days'
+            when TblCredit.Days_Diff between '91' and '201'  THEN '91 - 201 days'
+            else '202+ Days' end,
+            CASE
+            when TblCredit.Days_Diff between '1' and '3'  THEN 1
+            when TblCredit.Days_Diff between '4' and '10'  THEN 2
+            when TblCredit.Days_Diff between '11' and '15'  THEN 3
+            when TblCredit.Days_Diff between '16' and '30'  THEN 4
+            when TblCredit.Days_Diff between '31' and '90'  THEN 5
+            when TblCredit.Days_Diff between '91' and '201' THEN 6
+
+            ELSE  7
+            END ) AS T1
+            group by T1.AgingDays, SERIAL
+            order by SERIAL
+
+                                    """, fn.conn)
+
+    hafizur_0_3 = int(hafizur_df.Amount.loc[0])
+    hafizur_4_10 = int(hafizur_df.Amount.loc[1])
+    hafizur_11_15 = int(hafizur_df.Amount.loc[2])
+    hafizur_16_30 = int(hafizur_df.Amount.loc[3])
+    hafizur_31_90 = int(hafizur_df.Amount.loc[4])
+    hafizur_91_201 = int(hafizur_df.Amount.loc[5])
+    hafizur_202_more = int(hafizur_df.Amount.loc[6])
+
+    # # Convert data into percentage
+    anwar_array = [anwar_0_3, anwar_4_10, anwar_11_15, anwar_16_30, anwar_31_90, anwar_91_201, anwar_202_more]
+    anwar = [i * 100 / sum(anwar_array) for i, j, in zip(anwar_array, anwar_array)]
+    # print(anwar_array)
+    kamrul_array = [kamrul_0_3, kamrul_4_10, kamrul_11_15, kamrul_16_30, kamrul_31_90, kamrul_91_201, kamrul_202_more]
+    kamrul = [i * 100 / sum(kamrul_array) for i, j, in zip(kamrul_array, kamrul_array)]
+    # print(kamrul_array)
+    atik_array = [atik_0_3, atik_4_10, atik_11_15, atik_16_30, atik_31_90, atik_91_201, atik_202_more]
+    atik = [i * 100 / sum(atik_array) for i, j, in zip(atik_array, atik_array)]
+    # print(atik_array)
+    nurul_array = [nurul_0_3, nurul_4_10, nurul_11_15, nurul_16_30, nurul_31_90, nurul_91_201, nurul_202_more]
+    nurul = [i * 100 / sum(nurul_array) for i, j, in zip(nurul_array, nurul_array)]
+    # print(nurul_array)
+    hafizur_array = [hafizur_0_3, hafizur_4_10, hafizur_11_15, hafizur_16_30, hafizur_31_90, hafizur_91_201, hafizur_202_more]
+    hafizur = [i * 100 / sum(hafizur_array) for i, j, in zip(hafizur_array, hafizur_array)]
+    # print(hafizur_array)
+
+    fig, ax = lib.plt.subplots(figsize=(12.8, 4.8))
+    barWidth = .12
+    x = lib.np.arange(7)
+
+    legend_element = [
+        lib.Patch(facecolor='#88aeef', label='Mr. Anwar')
+        , lib.Patch(facecolor='#cb6d6d', label='Mr. Kamrul')
+        , lib.Patch(facecolor='#dc961d', label='Mr. Atik')
+        , lib.Patch(facecolor='#70e32f', label='Mr. Nurul')
+        , lib.Patch(facecolor='#fd358f', label='Mr. Hafizur')]
+    #--------#1a58c5
+    anwar_bar = lib.plt.bar(x + 0.00, anwar, color='#88aeef', label='Matured', edgecolor='white', width=barWidth)
+    kamrul_bar = lib.plt.bar(x + 0.12, kamrul, color='#cb6d6d', label='Matured', edgecolor='white', width=barWidth)
+    atik_bar = lib.plt.bar(x + 0.24, atik, color='#dc961d', label='Matured', edgecolor='white', width=barWidth)
+    nurul_bar = lib.plt.bar(x + 0.36, nurul, color='#70e32f', label='Matured', edgecolor='white', width=barWidth)
+    hafizur_bar = lib.plt.bar(x + 0.48, hafizur, color='#fd358f', label='Matured', edgecolor='white', width=barWidth)
+
+    # # ------------ Add label in the top of the bar --------------------------
+    m=0
+    n=0
+    o=0
+    p=0
+    q=0
+    for bar, anwar,values in zip(anwar_bar, anwar,anwar_array):
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width() / 2, height * .5,format(int(anwar_array[m]),',')+'K ('+ str('%.1f' % height) + '%'+')',
+                ha='center', va='bottom', fontweight='bold', rotation=90)
+        m=m+1
+    for bar, kamrul in zip(kamrul_bar, kamrul):
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width() / 2, height * .5,format(int(kamrul_array[n]),',')+'K ('+ str('%.1f' % height) + '%'+')',
+                ha='center', va='bottom', fontweight='bold', rotation=90)
+        n=n+1
+
+    for bar, atik in zip(atik_bar, atik):
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width() / 2, height * .5, format(int(atik_array[o]),',')+'K ('+ str('%.1f' % height) + '%'+')',
+                ha='center', va='bottom', fontweight='bold', rotation=90)
+        o=o+1
+    #
+    for bar, nurul in zip(nurul_bar, nurul):
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width() / 2, height * .5, format(int(nurul_array[p]),',')+'K ('+ str('%.1f' % height) + '%'+')',
+                ha='center', va='bottom', fontweight='bold', rotation=90)
+        p=p+1
+    #
+    for bar, hafizur in zip(hafizur_bar, hafizur):
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width() / 2, height * .5, format(int(hafizur_array[q]),',')+'K ('+ str('%.1f' % height) + '%'+')',
+                ha='center', va='bottom', fontweight='bold', rotation=90)
+        q=q+1
+
+    # ------ Add legend elements -------------------
+
+    category = ['0 to 3 Days', '4 to 10 Days', '11 to 15 Days', '16 to 30 Days', '31 to 90 Days', '91 to 201 Days',
+                '202 to More']
+    lib.plt.xticks(x + .25, category)
+
+    lib.plt.title('5. NDM wise Matured Credit Aging', fontsize=16, fontweight='bold', color='#3e0a75')
+    lib.plt.legend(handles=legend_element, loc='best', fontsize=11)
+    lib.plt.tight_layout()
+    # lib.plt.show()
+
+    print('5. NDM matured credit Aging')
+    lib.plt.savefig('./Images/5.ndm_matured_credit_aging.png')
